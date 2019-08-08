@@ -39,14 +39,15 @@ export default {
   components: {},
   data: () => ({
     headers: [
+           {
+        text: "location",
+        value: "location"
+      },
       {
         text: "name",
         value: "name"
       },
-      {
-        text: "location",
-        value: "location"
-      },
+ 
       {
         text: "time",
         value: "time"
