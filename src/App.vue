@@ -2,30 +2,71 @@
   <v-app>
     <v-app-bar app>
       <v-toolbar-title class="headline text-uppercase">
-        <span class="font-weight-light">邊撚個遲到</span>
+        <span class="font-weight-light">邊個遲到</span>
       </v-toolbar-title>
       <v-spacer></v-spacer>
     </v-app-bar>
 
     <v-content>
-      <v-data-table :headers="headers" :items="staffList" :items-per-page="-1">
-        <!-- <template v-slot:item.time="{ item }">{{getMoment(item.time)}}</template>
+      <v-dialog v-model="staffDialog" width="500">
+        <v-card>
+          <v-card-title class="headline grey lighten-2" primary-title>{{staffComboBoxSelected}}</v-card-title>
+          <v-flex v-if="!selectedStaff" align-center justify-center row fill-height >  
+            <h1  >未返工</h1>
+                 </v-flex>
+            <v-list v-else dense>
+              <v-list-item>
+                <v-list-item-content>Location:</v-list-item-content>
+
+                <v-list-item-content>
+                  <v-layout>
+                    <location-chip :location="selectedStaff.location"></location-chip>
+                  </v-layout>
+                </v-list-item-content>
+              </v-list-item>
+
+              <v-list-item>
+                <v-list-item-content>Time:</v-list-item-content>
+
+                <v-list-item-content>{{getMoment(selectedStaff.time)}}</v-list-item-content>
+              </v-list-item>
+            </v-list>
+     
+          <v-divider></v-divider>
+
+          <v-card-actions>
+            <v-spacer></v-spacer>
+            <v-btn color="primary" text @click="staffDialog = false">Close</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+      <v-container>
+        <v-flex xs12>
+          <v-combobox v-model="staffComboBoxSelected" :items="staffComboBox"></v-combobox>
+        </v-flex>
+        <v-data-table :headers="headers" :items="staffList" :items-per-page="-1">
+          <!-- <template v-slot:item.time="{ item }">{{getMoment(item.time)}}</template>
         
-        <template v-slot:item.isLate="{ item }">{{item.isLate}}</template>-->
-        <template v-slot:item="{item}">
-          <tr>
-            <td>{{item.location}}</td>
-            <td>
-              <span :class="item.isLate?'late':''">
-                 {{item.name}}
-              </span>
-         
-            </td>
-            <td>{{getMoment(item.time)}}</td>
-            <td>{{item.isLate}}</td>
-          </tr>
-        </template>
-      </v-data-table>
+          <template v-slot:item.isLate="{ item }">{{item.isLate}}</template>-->
+          <template v-slot:item="{item}">
+            <tr>
+              <td>
+                <location-chip :location="item.location"></location-chip>
+                <!-- <v-chip
+                  :color="item.location == 'HV'?'#2196F3':'#9C27B0'"
+                  text-color="white"
+                >{{item.location}}</v-chip>-->
+              </td>
+              <td>
+                <span :class="item.isLate?'late':''">{{item.name}}</span>
+              </td>
+              <td>
+                <span :class="item.isLate?'late':''">{{getMoment(item.time)}}</span>
+              </td>
+            </tr>
+          </template>
+        </v-data-table>
+      </v-container>
     </v-content>
   </v-app>
 </template>
@@ -34,243 +75,36 @@
 <script>
 const axios = require("axios");
 const moment = require("moment");
+import locationChip from "./LocationChip.vue";
 export default {
   name: "App",
-  components: {},
+  components: { locationChip },
   data: () => ({
     headers: [
-           {
-        text: "location",
+      {
+        text: "Location",
         value: "location"
       },
       {
-        text: "name",
+        text: "Name",
         value: "name"
       },
- 
+
       {
-        text: "time",
+        text: "Time",
         value: "time"
-      },
-      {
-        text: "isLate",
-        value: "isLate"
       }
+      // {
+      //   text: "isLate",
+      //   value: "isLate"
+      // }
     ],
     info: null,
-    staffList: []
-    // staffList: [
-    //   {
-    //     name: "YU Chun Fai",
-    //     location: "HV",
-    //     time: "2019-08-08T06:06:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Daniel W.T. CHAN",
-    //     location: "HV",
-    //     time: "2019-08-08T02:55:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Patrick S.W. CHAU",
-    //     location: "HV",
-    //     time: "2019-08-08T01:29:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Mandy M.L. LAI",
-    //     location: "AKN",
-    //     time: "2019-08-08T01:27:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Louis L.Y. SHUN",
-    //     location: "HV",
-    //     time: "2019-08-08T01:18:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Keith K.L. CHAN",
-    //     location: "HV",
-    //     time: "2019-08-08T01:09:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Raymen Y.N. HO",
-    //     location: "HV",
-    //     time: "2019-08-08T01:07:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Rio T.H. KWOK",
-    //     location: "HV",
-    //     time: "2019-08-08T01:07:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Maggie Y.M. CHAN",
-    //     location: "AKN",
-    //     time: "2019-08-08T01:05:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Paul C.S. MAK",
-    //     location: "HV",
-    //     time: "2019-08-08T01:04:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Alex K.W. WONG",
-    //     location: "HV",
-    //     time: "2019-08-08T01:04:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Alan H.F. CHAN",
-    //     location: "HV",
-    //     time: "2019-08-08T01:04:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Bruce K.K. FONG",
-    //     location: "AKN",
-    //     time: "2019-08-08T01:04:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Alex H.Y. LAW",
-    //     location: "HV",
-    //     time: "2019-08-08T01:02:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "Adolf C.S. LAI",
-    //     location: "HV",
-    //     time: "2019-08-08T01:02:00.000Z",
-    //     isLate: true
-    //   },
-    //   {
-    //     name: "KO Kin Man",
-    //     location: "HV",
-    //     time: "2019-08-08T00:58:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Elaine W.L. CHENG",
-    //     location: "AKN",
-    //     time: "2019-08-08T00:55:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "YIU Mei Ching",
-    //     location: "AKN",
-    //     time: "2019-08-08T00:54:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "YIU Mei Ching",
-    //     location: "AKN",
-    //     time: "2019-08-08T00:54:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Kenny C.K. WONG",
-    //     location: "HV",
-    //     time: "2019-08-08T00:53:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Sarah K.W. YUEN",
-    //     location: "AKN",
-    //     time: "2019-08-08T00:53:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Ewen Y.W. FUNG",
-    //     location: "HV",
-    //     time: "2019-08-08T00:52:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "German C.M. CHAU",
-    //     location: "HV",
-    //     time: "2019-08-08T00:50:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Polly P.K. CHAN",
-    //     location: "HV",
-    //     time: "2019-08-08T00:47:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Matthew C.W. LEE",
-    //     location: "AKN",
-    //     time: "2019-08-08T00:46:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Jessie Y.C. CHEUNG",
-    //     location: "HV",
-    //     time: "2019-08-08T00:46:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Peter C.K. YU",
-    //     location: "HV",
-    //     time: "2019-08-08T00:43:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Joey C.Y. PANG",
-    //     location: "HV",
-    //     time: "2019-08-08T00:41:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Alan W.L. LAW",
-    //     location: "HV",
-    //     time: "2019-08-08T00:41:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Ivan W.Y. WAN",
-    //     location: "AKN",
-    //     time: "2019-08-08T00:41:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Patrick W.F. DAI",
-    //     location: "HV",
-    //     time: "2019-08-08T00:36:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "CHEUNG Shing Shun",
-    //     location: "HV",
-    //     time: "2019-08-08T00:30:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Jeff S.H. NGAN",
-    //     location: "HV",
-    //     time: "2019-08-08T00:28:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Thomas C.C. LEUNG",
-    //     location: "HV",
-    //     time: "2019-08-08T00:25:00.000Z",
-    //     isLate: false
-    //   },
-    //   {
-    //     name: "Nathan S.C. CHENG",
-    //     location: "HV",
-    //     time: "2019-08-08T00:13:00.000Z",
-    //     isLate: false
-    //   }
-    // ]
+    staffList: [],
+    staffComboBox: [],
+    staffComboBoxSelected: null,
+    staffDialog: false,
+    selectedStaff: { name: "Peter", location: "HV", time: "123456" }
   }),
   methods: {
     getMoment(val) {
@@ -278,18 +112,57 @@ export default {
       return moment(val)
         .add(-8, "hours")
         .format("DD/MM/YYYY HH:mm");
+    },
+    arrayUnique(array) {
+      var a = array.concat();
+      for (var i = 0; i < a.length; ++i) {
+        for (var j = i + 1; j < a.length; ++j) {
+          if (a[i] === a[j]) a.splice(j--, 1);
+        }
+      }
+
+      return a;
     }
   },
+  created() {},
   mounted() {
+    // axios.get("http://localhost:8887/whoislate.json").then(response => {
     axios.get("https://quiet-spire-21167.herokuapp.com/").then(response => {
       this.staffList = response.data;
+
+      var tmp = JSON.parse(localStorage.getItem("staffList"));
+      if (tmp == null) {
+        let newList = this.staffList.map(x => x.name);
+        newList = newList.sort((a, b) => {
+          return a[0].toLowerCase() > b[0].toLowerCase() ? 1 : -1;
+        });
+        //If not set, use current list
+        localStorage.setItem("staffList", JSON.stringify(newList));
+        this.staffComboBox = newList;
+      } else {
+        let newList = this.arrayUnique(
+          this.staffList.map(x => x.name).concat(tmp)
+        );
+
+        newList = newList.sort((a, b) => {
+          return a[0].toLowerCase() > b[0].toLowerCase() ? 1 : -1;
+        });
+
+        localStorage.setItem("staffList", JSON.stringify(newList));
+        this.staffComboBox = newList;
+      }
     });
+  },
+  watch: {
+    staffComboBoxSelected: function(val) {
+      this.selectedStaff = this.staffList.filter(x => x.name == val)[0];
+      this.staffDialog = true;
+    }
   }
 };
 </script>
 <style>
-
-.late{
-  color: red
+.late {
+  color: red;
 }
 </style>
